@@ -2,6 +2,9 @@ export const info = [
   {
     name: '初体验',
   },
+  {
+    name: '顶点着色器&片元着色器',
+  },
 
 ]
 
