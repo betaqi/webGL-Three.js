@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="canvas"></canvas>
+    <!-- 顶点着色器 -->
+    <script id="vertexShader" type="x-shader/x-vertex">
+      attribute vec4 a_Position; //1. 使用 attribute 设置变量
+      void main() {
+        gl_Position = a_Position;
+        gl_PointSize = 40.0;
+      }
+    </script>
+    <!-- 片元着色器 -->
+    <script id="fragmentShader" type="x-shader/x-fragment">
+      void main() {
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      }
+    </script>
+
+    <script type="module">
+      import { initShader } from '../shader.js'
+      const vsSource = document.querySelector('#vertexShader').innerText
+      const fsSource = document.querySelector('#fragmentShader').innerText
+
+      canvas.width = 600
+      canvas.height = 600
+      const gl = canvas.getContext('webgl')
+      initShader(gl, vsSource, fsSource)
+
+      // 2. 获取 attribute 变量的存储位置
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      // 3. 向 attribute 变量赋值
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      // gl.drawArrays(gl.POINTS, 0, 1)
+
+      const pointsTasks = []
+
+      canvas.addEventListener('click', (e) => {
+        const x = e.clientX
+        const y = e.clientY
+        const rect = e.target.getBoundingClientRect()
+
+        // 获取鼠标点击位置相对于 gl 原点的偏移量
+        // const offsetGlOriginX = x - (rect.left + canvas.width / 2)
+        // const offsetGlOriginY = rect.top + canvas.height / 2 - y
+
+        const offsetGlOriginX = x - rect.left - canvas.width / 2
+        const offsetGlOriginY = canvas.height / 2 - y - rect.top
+
+        // 将偏移量转换为 gl 坐标系中的坐标 [-1, 1]
+        const x_ = offsetGlOriginX / (canvas.width / 2)
+        const y_ = offsetGlOriginY / (canvas.height / 2)
+
+        pointsTasks.push({ x: x_, y: y_ })
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        gl.vertexAttrib3f(a_Position, x_, y_, 0, 1)
+        gl.drawArrays(gl.POINTS, 0, 1)
+
+        gl.vertexAttrib3f(a_Position, 0.3, y_, 0, 1)
+        gl.drawArrays(gl.POINTS, 0, 1)
+
+        // 异步绘制会 颜色缓冲区会被清空 会导致之前的点消失
+        setTimeout(() => {
+          gl.vertexAttrib3f(a_Position, x_, y_, 0, 1)
+          gl.drawArrays(gl.POINTS, 0, 1)
+        }, 1000)
+
+        // draw()
+      })
+
+      function draw() {
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        pointsTasks.forEach(({ x, y }) => {
+          gl.vertexAttrib3f(a_Position, x, y, 0, 1)
+          gl.drawArrays(gl.POINTS, 0, 1)
+        })
+      }
+    </script>
+  </body>
+</html>
